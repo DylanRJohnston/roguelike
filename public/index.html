@@ -5,6 +5,16 @@
   <body>
     <canvas id="canvas" width="640" height="480"></canvas>
     <script src="./wasm/rougelike.js"></script>
+    <style>
+      body {
+        margin: 0px;
+      }
+
+      #canvas {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
     <script>
       window.addEventListener("load", async () => {
         await wasm_bindgen("./wasm/rougelike_bg.wasm");
