@@ -1,0 +1,11 @@
+[package]
+edition = "2021"
+name = "roguelike"
+version = "0.1.0"
+
+[dependencies]
+anyhow = "1.0.58"
+getrandom = {version = "0.2.7", features = ["js"]}
+rltk = "0.8.0"
+specs = "0.16.1"
+specs-derive = "0.4.1"

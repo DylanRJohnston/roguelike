@@ -1,0 +1,17 @@
+name: CD
+on: [push]
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Nix
+        uses: cachix/install-nix-action@v17
+      - run: nix build
+      - run: nix develop --command 'wasm-bindgen result/bin/roguelike.wasm --out-dir public/wasm --no-modules --no-typescript'
+      - name: Deploy to GitHub Pages
+        uses: crazy-max/ghaction-github-pages@v3
+        with:
+          target_branch: gh-pages
+          build_dir: public
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
