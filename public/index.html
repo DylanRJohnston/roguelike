@@ -4,7 +4,7 @@
   </head>
   <body>
     <canvas id="canvas" width="640" height="480"></canvas>
-    <script src="./wasm/rougelike.js"></script>
+    <script src="./wasm/roguelike.js"></script>
     <style>
       body {
         margin: 0px;
@@ -17,7 +17,7 @@
     </style>
     <script>
       window.addEventListener("load", async () => {
-        await wasm_bindgen("./wasm/rougelike_bg.wasm");
+        await wasm_bindgen("./wasm/roguelike_bg.wasm");
       });
     </script>
   </body>

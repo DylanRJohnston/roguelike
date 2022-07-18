@@ -6,10 +6,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Install Nix
         uses: cachix/install-nix-action@v17
-      - run: nix build
-      - run: nix develop --command 'wasm-bindgen result/bin/roguelike.wasm --out-dir public/wasm --no-modules --no-typescript'
+
+      - name: Cachix
+        uses: cachix/cachix-action@v10
+        with:
+          name: roguelike
+          authToken: ${{ secrets.CACHIX_KEY }}
+
+      - run: nix-build | cachix push roguelike
+
+      - run:  nix develop --command wasm-bindgen ./result/bin/roguelike.wasm --out-dir public/wasm --no-modules --no-typescript
+
       - name: Deploy to GitHub Pages
         uses: crazy-max/ghaction-github-pages@v3
         with:
