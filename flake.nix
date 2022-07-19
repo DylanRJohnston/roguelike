@@ -48,8 +48,8 @@
             };
           };
           web-app = pkgs.runCommand "roguelike-web-app" { } ''
-            ${pkgs.wasm-bindgen-cli}/bin/wasm-bindgen ${packages.wasm}/bin/roguelike.wasm --out-dir $out/wasm --no-modules --no-typescript
-            cp ${./public/index.html} $out/index.html
+            ${pkgs.wasm-bindgen-cli}/bin/wasm-bindgen ${packages.wasm}/bin/roguelike.wasm --out-dir $out/web-app/wasm --no-modules --no-typescript
+            cp ${./public/index.html} $out/web-app/index.html
           '';
         };
         defaultPackage = packages.web-app;
