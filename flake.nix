@@ -8,9 +8,10 @@
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-filter.url = "github:numtide/nix-filter";
   };
 
-  outputs = { self, nixpkgs, flake-utils, naersk, fenix }: flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, flake-utils, nix-filter, naersk, fenix }: flake-utils.lib.eachDefaultSystem (system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
       cross-toolchain = with fenix.packages.${system}; combine [
@@ -34,7 +35,14 @@
     in
     {
       defaultPackage = cross-compile.buildPackage {
-        src = ./.;
+        src = nix-filter.lib {
+          root = ./.;
+          include = [
+            "Cargo.lock"
+            "Cargo.toml"
+            (nix-filter.lib.inDirectory "src")
+          ];
+        };
         CARGO_BUILD_TARGET = "wasm32-unknown-unknown";
       };
       devShell = pkgs.mkShell {
