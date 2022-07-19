@@ -16,9 +16,11 @@ jobs:
           name: roguelike
           authToken: ${{ secrets.CACHIX_KEY }}
 
-      - run: nix-build | cachix push roguelike
+      - name: Build and Cache
+        run:  nix-store -qR --include-outputs $(nix build --json | jq -r ".[].drvPath") | grep ".drv$" | cachix push roguelike
 
-      - run:  nix develop --command wasm-bindgen ./result/bin/roguelike.wasm --out-dir public/wasm --no-modules --no-typescript
+      - name: WASM Bindgen
+        run:  nix develop --command wasm-bindgen ./result/bin/roguelike.wasm --out-dir public/wasm --no-modules --no-typescript
 
       - name: Deploy to GitHub Pages
         uses: crazy-max/ghaction-github-pages@v3
