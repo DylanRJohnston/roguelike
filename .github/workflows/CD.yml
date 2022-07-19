@@ -17,21 +17,15 @@ jobs:
           authToken: ${{ secrets.CACHIX_KEY }}
 
       - name: Build
-        run:  nix build
+        run:  nix build -L
 
       - name: Cache
         run: nix-store -qR --include-outputs $(nix show-derivation | jq -r '. | keys[0]') | grep -vE '.drv$' | cachix push roguelike
-
-      - name: WASM Bindgen
-        run:  nix develop --command wasm-bindgen ./result/bin/roguelike.wasm --out-dir public/wasm --no-modules --no-typescript
-
-      - name: Setup Github Pages
-        run: rm public/.gitignore
 
       - name: Deploy to GitHub Pages
         uses: crazy-max/ghaction-github-pages@v3
         with:
           target_branch: gh-pages
-          build_dir: public
+          build_dir: result
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
