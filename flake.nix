@@ -58,10 +58,8 @@
             [
               dev-toolchain
               pkgs.libiconv
-              pkgs.sqlite
               pkgs.lldb
               pkgs.wasm-bindgen-cli
-              pkgs.wasm-pack
               pkgs.simple-http-server
             ] ++ darwin-support;
 
