@@ -17,10 +17,10 @@ jobs:
           authToken: ${{ secrets.CACHIX_KEY }}
 
       - name: Build
-        run:  nix build -L
+        run:  nix build -L .#web-app
 
       - name: Cache
-        run: nix-store -qR --include-outputs $(nix show-derivation | jq -r '. | keys[0]') | grep -vE '.drv$' | cachix push roguelike
+        run: nix-store -qR --include-outputs $(nix eval --raw .#web-app.drvPath) | cachix push roguelike
 
       - name: Deploy to GitHub Pages
         uses: crazy-max/ghaction-github-pages@v3
