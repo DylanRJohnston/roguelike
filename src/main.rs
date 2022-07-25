@@ -1,17 +1,19 @@
 mod components;
+mod models;
 mod state;
 mod systems;
 mod util;
 
 use components::{LeftMover, Player, Position, Renderable};
-use rltk::{main_loop, to_cp437, BResult, RltkBuilder, RGB};
+use models::map::{self, Map, MapBuilder};
+use rltk::{main_loop, to_cp437, BResult, Point, RandomNumberGenerator, RltkBuilder, RGB};
 use specs::{Builder, World, WorldExt};
 use state::State;
-use util::Ring;
 
 fn main() -> BResult<()> {
     let terminal = RltkBuilder::simple80x50()
         .with_title("Roguelike Tutorial")
+        .with_fps_cap(30.0)
         .build()?;
 
     let mut ecs = World::new();
@@ -20,32 +22,32 @@ fn main() -> BResult<()> {
     ecs.register::<LeftMover>();
     ecs.register::<Player>();
 
-    let coordinates = Position {
-        x: Ring::new(0, 80),
-        y: Ring::new(0, 50),
+    let mut map_builder = MapBuilder {
+        map: Map::new(),
+        rooms: vec![],
+        player_start: Point::new(0, 0),
+        max_rooms: 20,
+        rng: RandomNumberGenerator::new(),
     };
 
+    map_builder.build_random_rooms();
+    map_builder.dig_random_tunnels();
+
     ecs.create_entity()
-        .with(coordinates + Position::new(35, 20))
+        .with(Position(map_builder.rooms[10].center()))
         .with(Renderable {
             glyph: to_cp437('☺'),
-            foreground: RGB::named(rltk::YELLOW),
+            foreground: RGB::named(rltk::GREEN),
             background: RGB::named(rltk::BLACK),
         })
         .with(Player {})
         .build();
 
-    for i in 1..10 {
-        ecs.create_entity()
-            .with(coordinates + Position::new(i * 7, 25))
-            .with(Renderable {
-                glyph: to_cp437('@'),
-                foreground: RGB::named(rltk::RED),
-                background: RGB::named(rltk::BLACK),
-            })
-            .with(LeftMover {})
-            .build();
-    }
-
-    main_loop(terminal, State { ecs })
+    main_loop(
+        terminal,
+        State {
+            ecs,
+            map: map_builder.map,
+        },
+    )
 }
