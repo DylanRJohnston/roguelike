@@ -1,7 +1,8 @@
-use rltk::{to_cp437, GameState, Point, Rltk, VirtualKeyCode, BLACK, GREEN, GREY1, GREY50, YELLOW};
-use specs::{Join, RunNow, World, WorldExt};
+use rltk::{to_cp437, GameState, Point, Rltk, VirtualKeyCode, BLACK, GREY50, WHITE, YELLOW};
+use specs::{Join, World, WorldExt};
 
 use crate::{
+    camera::Camera,
     components::{Player, Position, Renderable},
     models::map::{Map, Tile},
 };
@@ -44,29 +45,38 @@ impl State {
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
-        ctx.cls();
-
         self.player_input(ctx);
         self.run_systems();
 
-        self.map
-            .coordinate_iter()
-            .for_each(|(Point { x, y }, tile)| match tile {
-                Tile::Floor => ctx.set(x, y, YELLOW, BLACK, to_cp437('.')),
-                Tile::Wall => ctx.set(x, y, GREY50, BLACK, to_cp437('#')),
-            });
-
         let positions = self.ecs.read_storage::<Position>();
+        let players = self.ecs.read_storage::<Player>();
+
+        let mut camera = Camera::new(Point::new(0, 0), 40, 25);
+
+        ctx.set_active_console(0);
+        ctx.cls();
+
+        for (_, Position(point)) in (&players, &positions).join() {
+            camera = Camera::new(*point, 40, 25);
+
+            camera
+                .worldspace_view_iter()
+                .filter_map(|point| Some((camera.to_camera_space(&point), self.map.at(point)?)))
+                .for_each(|(Point { x, y }, tile)| match tile {
+                    Tile::Floor => ctx.set(x, y, WHITE, BLACK, to_cp437('.')),
+                    Tile::Wall => ctx.set(x, y, WHITE, BLACK, to_cp437('#')),
+                });
+        }
+
+        ctx.set_active_console(1);
+        ctx.cls();
+
         let renderables = self.ecs.read_storage::<Renderable>();
 
         for (Position(pos), render) in (&positions, &renderables).join() {
-            ctx.set(
-                pos.x,
-                pos.y,
-                render.foreground,
-                render.background,
-                render.glyph,
-            )
+            let Point { x, y } = camera.to_camera_space(pos);
+
+            ctx.set(x, y, WHITE, BLACK, render.glyph)
         }
     }
 }

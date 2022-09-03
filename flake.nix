@@ -24,13 +24,7 @@
           cargo = wasm-toolchain;
           rustc = wasm-toolchain;
         };
-        dev-toolchain = fenix.packages.${system}.complete.withComponents [
-          "cargo"
-          "rustc"
-          "rustfmt"
-          "clippy"
-          "rust-src"
-        ];
+        dev-toolchain = fenix.packages.${system}.complete.toolchain;
         darwin-support =
           if pkgs.stdenv.isDarwin then with pkgs.darwin.apple_sdk.frameworks; [ Security AppKit ] else [ ];
       in
@@ -58,7 +52,6 @@
             [
               dev-toolchain
               pkgs.libiconv
-              pkgs.lldb
               pkgs.wasm-bindgen-cli
               pkgs.simple-http-server
             ] ++ darwin-support;

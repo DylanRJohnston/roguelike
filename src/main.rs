@@ -1,3 +1,4 @@
+mod camera;
 mod components;
 mod models;
 mod state;
@@ -11,9 +12,15 @@ use specs::{Builder, World, WorldExt};
 use state::State;
 
 fn main() -> BResult<()> {
-    let terminal = RltkBuilder::simple80x50()
+    let terminal = RltkBuilder::new()
         .with_title("Roguelike Tutorial")
         .with_fps_cap(30.0)
+        .with_dimensions(40, 25)
+        .with_tile_dimensions(32, 32)
+        .with_resource_path("resources/")
+        .with_font("dungeonfont.png", 32, 32)
+        .with_simple_console(40, 25, "dungeonfont.png")
+        .with_simple_console_no_bg(40, 25, "dungeonfont.png")
         .build()?;
 
     let mut ecs = World::new();
@@ -36,7 +43,7 @@ fn main() -> BResult<()> {
     ecs.create_entity()
         .with(Position(map_builder.rooms[10].center()))
         .with(Renderable {
-            glyph: to_cp437('☺'),
+            glyph: to_cp437('@'),
             foreground: RGB::named(rltk::GREEN),
             background: RGB::named(rltk::BLACK),
         })
