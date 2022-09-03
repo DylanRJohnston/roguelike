@@ -33,11 +33,11 @@ impl State {
     }
 
     fn player_input(&mut self, ctx: &mut Rltk) {
-        match ctx.key {
-            Some(VirtualKeyCode::Left) => self.try_move_player(Point { x: -1, y: 0 }),
-            Some(VirtualKeyCode::Right) => self.try_move_player(Point { x: 1, y: 0 }),
-            Some(VirtualKeyCode::Up) => self.try_move_player(Point { x: 0, y: -1 }),
-            Some(VirtualKeyCode::Down) => self.try_move_player(Point { x: 0, y: 1 }),
+        match ctx.key.unwrap_or(VirtualKeyCode::NoConvert) {
+            VirtualKeyCode::Left | VirtualKeyCode::A => self.try_move_player(Point::new(-1, 0)),
+            VirtualKeyCode::Right | VirtualKeyCode::D => self.try_move_player(Point::new(1, 0)),
+            VirtualKeyCode::Up | VirtualKeyCode::W => self.try_move_player(Point::new(0, -1)),
+            VirtualKeyCode::Down | VirtualKeyCode::S => self.try_move_player(Point::new(0, 1)),
             _ => {}
         }
     }
