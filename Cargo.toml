@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 anyhow = "1.0.58"
+console_error_panic_hook = "0.1.7"
 getrandom = {version = "0.2.7", features = ["js"]}
 rltk = "0.8.0"
 specs = "0.16.1"

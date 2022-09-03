@@ -38,6 +38,7 @@
                 "Cargo.lock"
                 "Cargo.toml"
                 (nix-filter.lib.inDirectory "src")
+                (nix-filter.lib.inDirectory "resources")
               ];
             };
           };

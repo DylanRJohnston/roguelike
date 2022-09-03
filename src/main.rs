@@ -5,19 +5,31 @@ mod state;
 mod systems;
 mod util;
 
+use std::panic;
+
 use components::{LeftMover, Player, Position, Renderable};
 use models::map::{self, Map, MapBuilder};
-use rltk::{main_loop, to_cp437, BResult, Point, RandomNumberGenerator, RltkBuilder, RGB};
+use rltk::{
+    embedded_resource, link_resource, main_loop, to_cp437, BResult, Point, RandomNumberGenerator,
+    RltkBuilder, EMBED, RGB,
+};
 use specs::{Builder, World, WorldExt};
 use state::State;
 
+const dungeonfont: &'static [u8] = include_bytes!("../resources/dungeonfont.png");
+
 fn main() -> BResult<()> {
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
+    EMBED
+        .lock()
+        .add_resource("../resources/dungeonfont.png".to_string(), dungeonfont);
+
     let terminal = RltkBuilder::new()
         .with_title("Roguelike Tutorial")
         .with_fps_cap(30.0)
         .with_dimensions(40, 25)
         .with_tile_dimensions(32, 32)
-        .with_resource_path("resources/")
+        .with_resource_path("../resources/")
         .with_font("dungeonfont.png", 32, 32)
         .with_simple_console(40, 25, "dungeonfont.png")
         .with_simple_console_no_bg(40, 25, "dungeonfont.png")
