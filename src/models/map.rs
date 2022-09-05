@@ -1,12 +1,12 @@
 use std::cmp::{max, min};
 
-use rltk::{Point, RandomNumberGenerator, Rect};
+use bracket_lib::prelude::{Point, RandomNumberGenerator, Rect};
 
-pub const MAP_WIDTH: usize = 80;
-pub const MAP_HEIGHT: usize = 50;
-pub const NUM_TILES: usize = MAP_WIDTH * MAP_HEIGHT;
+pub const MAP_WIDTH: i32 = 80;
+pub const MAP_HEIGHT: i32 = 50;
+pub const NUM_TILES: i32 = MAP_WIDTH * MAP_HEIGHT;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Tile {
     Wall,
     Floor,
@@ -17,13 +17,14 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new() -> Map {
-        Map {
-            tiles: vec![Tile::Wall; NUM_TILES.try_into().unwrap()],
+    pub fn new() -> Self {
+        Self {
+            tiles: vec![Tile::Wall; NUM_TILES as usize],
         }
     }
 
-    pub fn in_bounds(point: Point) -> bool {
+    #[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
+    pub const fn in_bounds(point: Point) -> bool {
         point.x >= 0
             && point.y >= 0
             && point.x < (MAP_WIDTH as i32)
@@ -31,7 +32,7 @@ impl Map {
     }
 
     pub fn at(&self, point: Point) -> Option<Tile> {
-        if !Map::in_bounds(point) {
+        if !Self::in_bounds(point) {
             return None;
         }
 
@@ -39,57 +40,64 @@ impl Map {
     }
 
     pub fn set(&mut self, point: Point, new_tile: Tile) {
-        self.borrow_mut_at(point).map(|tile| *tile = new_tile);
+        if let Some(tile) = self.borrow_mut_at(point) {
+            *tile = new_tile;
+        }
     }
 
-    pub fn borrow_mut_at<'a>(&'a mut self, point: Point) -> Option<&'a mut Tile> {
-        if !Map::in_bounds(point) {
+    pub fn borrow_mut_at(&mut self, point: Point) -> Option<&'_ mut Tile> {
+        if !Self::in_bounds(point) {
             return None;
         }
 
         Some(self.unsafe_borrow_mut_at(point))
     }
 
+    #[allow(clippy::cast_sign_loss)]
     fn unsafe_borrow_mut_at(&mut self, point: Point) -> &mut Tile {
-        &mut self.tiles[((point.x as usize) + (point.y as usize) * MAP_WIDTH)]
+        &mut self.tiles[(point.x + point.y * MAP_WIDTH) as usize]
     }
 
     pub fn can_enter(&self, point: Point) -> bool {
         self.at(point).map_or(false, |tile| tile == Tile::Floor)
     }
 
+    #[allow(clippy::cast_sign_loss)]
     fn unsafe_at(&self, point: Point) -> Tile {
-        self.tiles[((point.x as usize) + (point.y as usize) * MAP_WIDTH)]
+        self.tiles[(point.x + point.y * MAP_WIDTH) as usize]
     }
 
-    pub fn coordinate_iter<'a>(&'a self) -> impl Iterator<Item = (Point, Tile)> + 'a {
-        (0..MAP_WIDTH as i32)
-            .into_iter()
-            .flat_map(|x| {
-                (0..MAP_HEIGHT as i32)
-                    .into_iter()
-                    .map(move |y| Point { x, y })
-            })
-            .map(|point| (point, self.unsafe_at(point)))
-    }
+    // pub fn coordinate_iter(&self) -> impl Iterator<Item = (Point, Tile)> + '_ {
+    //     (0..MAP_WIDTH as i32)
+    //         .into_iter()
+    //         .flat_map(|x| {
+    //             (0..MAP_HEIGHT as i32)
+    //                 .into_iter()
+    //                 .map(move |y| Point { x, y })
+    //         })
+    //         .map(|point| (point, self.unsafe_at(point)))
+    // }
 }
 
-pub struct MapBuilder {
+pub struct Builder<'a> {
     pub map: Map,
     pub rooms: Vec<Rect>,
-    pub player_start: Point,
     pub max_rooms: usize,
-    pub rng: RandomNumberGenerator,
+    pub rng: &'a mut RandomNumberGenerator,
 }
 
-impl MapBuilder {
-    fn room_intersection(&self, new_room: Rect) -> bool {
-        for room in self.rooms.iter() {
-            if new_room.intersect(room) {
-                return true;
-            }
+impl<'a> Builder<'a> {
+    pub fn new(rng: &'a mut RandomNumberGenerator) -> Self {
+        Self {
+            map: Map::new(),
+            rooms: vec![],
+            max_rooms: 20,
+            rng,
         }
-        return false;
+    }
+
+    fn room_intersection(&self, new_room: Rect) -> bool {
+        self.rooms.iter().any(|room| new_room.intersect(room))
     }
 
     fn new_room(&mut self) -> Rect {
@@ -101,7 +109,7 @@ impl MapBuilder {
         )
     }
 
-    fn room_in_bounds(rect: &Rect) -> bool {
+    const fn room_in_bounds(rect: &Rect) -> bool {
         rect.x1 > 0
             && rect.x1 < (MAP_WIDTH as i32)
             && rect.x2 > 0
@@ -112,22 +120,16 @@ impl MapBuilder {
             && rect.y2 < (MAP_HEIGHT as i32)
     }
 
-    fn try_dig_random_room(&mut self) -> bool {
+    fn try_dig_random_room(&mut self) {
         let new_room = self.new_room();
 
-        if self.room_intersection(new_room) {
-            return false;
-        }
+        if self.room_intersection(new_room) {}
 
-        if !MapBuilder::room_in_bounds(&new_room) {
-            return false;
-        }
+        if !Self::room_in_bounds(&new_room) {}
 
         new_room.for_each(|point| self.map.set(point, Tile::Floor));
 
         self.rooms.push(new_room);
-
-        return true;
     }
 
     pub fn build_random_rooms(&mut self) {
@@ -152,14 +154,13 @@ impl MapBuilder {
             .iter()
             .zip(self.rooms[1..].iter())
             .map(|(a, b)| (a.center(), b.center()))
-            .for_each(|(prev, next)| match self.rng.range(0, 2) {
-                1 => {
-                    MapBuilder::dig_horizontal_tunnel(&mut self.map, prev.x, next.x, prev.y);
-                    MapBuilder::dig_vertical_tunnel(&mut self.map, next.x, prev.y, next.y);
-                }
-                _ => {
-                    MapBuilder::dig_vertical_tunnel(&mut self.map, prev.x, prev.y, next.y);
-                    MapBuilder::dig_horizontal_tunnel(&mut self.map, prev.x, next.x, next.y);
+            .for_each(|(prev, next)| {
+                if self.rng.range(0, 2) == 1 {
+                    Self::dig_horizontal_tunnel(&mut self.map, prev.x, next.x, prev.y);
+                    Self::dig_vertical_tunnel(&mut self.map, next.x, prev.y, next.y);
+                } else {
+                    Self::dig_vertical_tunnel(&mut self.map, prev.x, prev.y, next.y);
+                    Self::dig_horizontal_tunnel(&mut self.map, prev.x, next.x, next.y);
                 }
             });
     }

@@ -1,10 +1,7 @@
-use rltk::{FontCharType, RGB};
-use specs::{Component, DenseVecStorage};
-use specs_derive::Component;
+use bracket_lib::prelude::{ColorPair, FontCharType};
 
-#[derive(Debug, Component)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Renderable {
     pub glyph: FontCharType,
-    pub foreground: RGB,
-    pub background: RGB,
+    pub color: ColorPair,
 }

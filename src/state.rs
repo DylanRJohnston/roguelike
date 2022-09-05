@@ -1,82 +1,55 @@
-use rltk::{to_cp437, GameState, Point, Rltk, VirtualKeyCode, BLACK, GREY50, WHITE, YELLOW};
-use specs::{Join, World, WorldExt};
+use bracket_lib::prelude::{Rect, *};
+use legion::{Resources, Schedule, World};
 
-use crate::{
-    camera::Camera,
-    components::{Player, Position, Renderable},
-    models::map::{Map, Tile},
-};
+use crate::{camera::Camera, models::map, spawn, systems};
 
 pub struct State {
     pub ecs: World,
-    pub map: Map,
+    pub resources: Resources,
+    pub systems: Schedule,
 }
 
 impl State {
-    fn run_systems(&mut self) {
-        // let mut lw = LeftWalker {};
-        // lw.run_now(&self.ecs);
-        // self.ecs.maintain();
-    }
+    pub fn new() -> Self {
+        let mut ecs = World::default();
+        let mut resources = Resources::default();
+        let mut rng = RandomNumberGenerator::new();
 
-    fn try_move_player(&mut self, delta: Point) {
-        let mut positions = self.ecs.write_storage::<Position>();
-        let mut players = self.ecs.write_storage::<Player>();
+        let mut map_builder = map::Builder::new(&mut rng);
+        map_builder.build_random_rooms();
+        map_builder.dig_random_tunnels();
 
-        for (_, Position(point)) in (&mut players, &mut positions).join() {
-            let new_position = *point + delta;
+        let camera = Camera::new(&Point::new(0, 0), 40, 25);
 
-            if self.map.can_enter(new_position) {
-                *point = new_position;
-            }
-        }
-    }
+        resources.insert(map_builder.map);
+        resources.insert(camera);
 
-    fn player_input(&mut self, ctx: &mut Rltk) {
-        match ctx.key.unwrap_or(VirtualKeyCode::NoConvert) {
-            VirtualKeyCode::Left | VirtualKeyCode::A => self.try_move_player(Point::new(-1, 0)),
-            VirtualKeyCode::Right | VirtualKeyCode::D => self.try_move_player(Point::new(1, 0)),
-            VirtualKeyCode::Up | VirtualKeyCode::W => self.try_move_player(Point::new(0, -1)),
-            VirtualKeyCode::Down | VirtualKeyCode::S => self.try_move_player(Point::new(0, 1)),
-            _ => {}
+        spawn::player(&mut ecs, map_builder.rooms[0].center());
+        map_builder
+            .rooms
+            .iter()
+            .skip(1)
+            .map(Rect::center)
+            .for_each(|pos| spawn::monster(&mut ecs, &mut rng, pos));
+
+        Self {
+            ecs,
+            resources,
+            systems: systems::build_scheduler(),
         }
     }
 }
 
 impl GameState for State {
-    fn tick(&mut self, ctx: &mut Rltk) {
-        self.player_input(ctx);
-        self.run_systems();
+    fn tick(&mut self, terminal: &mut BTerm) {
+        terminal.set_active_console(0);
+        terminal.cls();
+        terminal.set_active_console(1);
+        terminal.cls();
 
-        let positions = self.ecs.read_storage::<Position>();
-        let players = self.ecs.read_storage::<Player>();
+        self.resources.insert(terminal.key);
+        self.systems.execute(&mut self.ecs, &mut self.resources);
 
-        let mut camera = Camera::new(Point::new(0, 0), 40, 25);
-
-        ctx.set_active_console(0);
-        ctx.cls();
-
-        for (_, Position(point)) in (&players, &positions).join() {
-            camera = Camera::new(*point, 40, 25);
-
-            camera
-                .worldspace_view_iter()
-                .filter_map(|point| Some((camera.to_camera_space(&point), self.map.at(point)?)))
-                .for_each(|(Point { x, y }, tile)| match tile {
-                    Tile::Floor => ctx.set(x, y, WHITE, BLACK, to_cp437('.')),
-                    Tile::Wall => ctx.set(x, y, WHITE, BLACK, to_cp437('#')),
-                });
-        }
-
-        ctx.set_active_console(1);
-        ctx.cls();
-
-        let renderables = self.ecs.read_storage::<Renderable>();
-
-        for (Position(pos), render) in (&positions, &renderables).join() {
-            let Point { x, y } = camera.to_camera_space(pos);
-
-            ctx.set(x, y, WHITE, BLACK, render.glyph)
-        }
+        render_draw_buffer(terminal).expect("Render error");
     }
 }

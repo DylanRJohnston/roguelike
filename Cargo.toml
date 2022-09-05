@@ -5,8 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 anyhow = "1.0.58"
+bracket-lib = "0.8.1"
 console_error_panic_hook = "0.1.7"
 getrandom = {version = "0.2.7", features = ["js"]}
-rltk = "0.8.0"
-specs = "0.16.1"
-specs-derive = "0.4.1"
+legion = "0.3.1"

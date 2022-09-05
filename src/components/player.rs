@@ -1,6 +1,2 @@
-use specs::Component;
-use specs::DenseVecStorage;
-use specs_derive::Component;
-
-#[derive(Debug, Component)]
+#[derive(Debug)]
 pub struct Player {}

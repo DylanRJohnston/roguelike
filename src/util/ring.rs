@@ -9,7 +9,7 @@ pub struct Ring {
 
 impl From<i32> for Ring {
     fn from(value: i32) -> Self {
-        Ring {
+        Self {
             lower_bound: i32::MIN,
             upper_bound: i32::MAX,
             value,
@@ -17,14 +17,14 @@ impl From<i32> for Ring {
     }
 }
 
-impl Into<i32> for Ring {
-    fn into(self) -> i32 {
-        self.value
+impl From<Ring> for i32 {
+    fn from(val: Ring) -> Self {
+        val.value
     }
 }
 
 impl Add for Ring {
-    type Output = Ring;
+    type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
         self.set(self.get() + rhs.get())
@@ -33,12 +33,12 @@ impl Add for Ring {
 
 impl AddAssign for Ring {
     fn add_assign(&mut self, rhs: Self) {
-        *self = *self + rhs
+        *self = *self + rhs;
     }
 }
 
 impl Sub for Ring {
-    type Output = Ring;
+    type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         self.set(self.get() - rhs.get())
@@ -47,28 +47,28 @@ impl Sub for Ring {
 
 impl SubAssign for Ring {
     fn sub_assign(&mut self, rhs: Self) {
-        *self = *self - rhs
+        *self = *self - rhs;
     }
 }
 
 impl Ring {
-    pub fn new(lower_bound: i32, upper_bound: i32) -> Self {
-        Ring {
+    pub const fn new(lower_bound: i32, upper_bound: i32) -> Self {
+        Self {
             lower_bound,
             upper_bound,
             value: lower_bound,
         }
     }
 
-    pub fn set(&self, value: i32) -> Self {
-        Ring {
+    pub const fn set(&self, value: i32) -> Self {
+        Self {
             value: (value - self.lower_bound).rem_euclid(self.upper_bound - self.lower_bound)
                 + self.lower_bound,
             ..*self
         }
     }
 
-    pub fn get(&self) -> i32 {
+    pub const fn get(&self) -> i32 {
         self.value
     }
 }
