@@ -10,5 +10,5 @@ pub fn camera(ecs: &mut SubWorld, #[resource] camera: &mut Camera) {
     <&Point>::query()
         .filter(component::<Player>())
         .iter(ecs)
-        .for_each(|player| camera.update(player));
+        .for_each(|player| camera.update(*player));
 }

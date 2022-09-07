@@ -12,7 +12,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(player_position: &Point, width: i32, height: i32) -> Self {
+    pub fn new(player_position: Point, width: i32, height: i32) -> Self {
         let mut camera = Self {
             width,
             height,
@@ -23,7 +23,7 @@ impl Camera {
         camera
     }
 
-    pub fn update(&mut self, point: &Point) {
+    pub fn update(&mut self, point: Point) {
         self.left_x = point.x - self.width / 2;
         self.right_x = point.x + self.width / 2;
         self.top_y = point.y - self.height / 2;
@@ -35,7 +35,7 @@ impl Camera {
             .flat_map(|x| (self.top_y..=self.bottom_y).map(move |y| Point::new(x, y)))
     }
 
-    pub fn to_camera_space(&self, Point { x, y }: &Point) -> Point {
+    pub const fn to_camera_space(&self, Point { x, y }: Point) -> Point {
         Point {
             x: x - self.left_x,
             y: y - self.top_y,

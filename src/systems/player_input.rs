@@ -21,6 +21,7 @@ const fn intent(key: VirtualKeyCode) -> Option<Intent> {
     }
 }
 
+#[allow(clippy::trivially_copy_pass_by_ref)]
 #[system]
 #[write_component(Point)]
 #[read_component(Player)]

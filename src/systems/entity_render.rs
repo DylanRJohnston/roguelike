@@ -14,7 +14,7 @@ pub fn entity_render(ecs: &SubWorld, #[resource] camera: &Camera) {
         .iter(ecs)
         .for_each(|(position, renderable)| {
             draw_batch.set(
-                camera.to_camera_space(position),
+                camera.to_camera_space(*position),
                 renderable.color,
                 renderable.glyph,
             );

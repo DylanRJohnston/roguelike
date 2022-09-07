@@ -15,11 +15,9 @@ impl State {
         let mut resources = Resources::default();
         let mut rng = RandomNumberGenerator::new();
 
-        let mut map_builder = map::Builder::new(&mut rng);
-        map_builder.build_random_rooms();
-        map_builder.dig_random_tunnels();
+        let map_builder = map::Builder::new(&mut rng).build();
 
-        let camera = Camera::new(&Point::new(0, 0), 40, 25);
+        let camera = Camera::new(Point::new(0, 0), 40, 25);
 
         resources.insert(map_builder.map);
         resources.insert(camera);
